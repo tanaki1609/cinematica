@@ -22,7 +22,7 @@ class Genre(models.Model):
 
 
 class Film(models.Model):
-    director = models.ForeignKey(Director, on_delete=models.CASCADE, null=True)
+    director = models.ForeignKey(Director, on_delete=models.CASCADE, null=True)  # director_id
     genres = models.ManyToManyField(Genre)
     title = models.CharField(max_length=255)
     text = models.TextField(null=True, blank=True)
