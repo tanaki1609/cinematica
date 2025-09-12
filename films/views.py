@@ -2,7 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Film
-from .serializers import FilmListSerializer, FilmDetailSerializer
+from .serializers import (FilmListSerializer,
+                          FilmDetailSerializer,
+                          FilmValidateSerializer)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])  # GET->retrieve, PUT->update, DELETE->destroy
@@ -16,12 +18,19 @@ def film_detail_api_view(request, id):
         data = FilmDetailSerializer(film, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        film.title = request.data.get('title')
-        film.text = request.data.get('text')
-        film.rating_kp = request.data.get('rating_kp')
-        film.is_active = request.data.get('is_active')
-        film.director_id = request.data.get('director_id')
-        film.genres.set(request.data.get('genres'))
+        serializer = FilmValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data=serializer.errors
+            )
+
+        film.title = serializer.validated_data.get('title')
+        film.text = serializer.validated_data.get('text')
+        film.rating_kp = serializer.validated_data.get('rating_kp')
+        film.is_active = serializer.validated_data.get('is_active')
+        film.director_id = serializer.validated_data.get('director_id')
+        film.genres.set(serializer.validated_data.get('genres'))
         film.save()
         return Response(status=status.HTTP_201_CREATED,
                         data=FilmDetailSerializer(film).data)
@@ -45,13 +54,21 @@ def film_list_create_api_view(request):
             status=status.HTTP_200_OK  # status = int
         )
     elif request.method == 'POST':
-        # step 1: Receive data from RequestBody
-        title = request.data.get('title')
-        text = request.data.get('text')
-        rating_kp = request.data.get('rating_kp')
-        is_active = request.data.get('is_active')
-        director_id = request.data.get('director_id')
-        genres = request.data.get('genres')
+        # step 0: Validation (Existing, Typing, Extra)
+        serializer = FilmValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data=serializer.errors
+            )
+
+        # step 1: Receive data from ValidatedData
+        title = serializer.validated_data.get('title')
+        text = serializer.validated_data.get('text')
+        rating_kp = serializer.validated_data.get('rating_kp')
+        is_active = serializer.validated_data.get('is_active')
+        director_id = serializer.validated_data.get('director_id')
+        genres = serializer.validated_data.get('genres')
 
         # step 2: Create film by received data
         film = Film.objects.create(
