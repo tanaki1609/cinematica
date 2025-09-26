@@ -1,0 +1,20 @@
+version: '3'
+services:
+  cinematica_back:
+    build:
+      context: .
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8001:8000" # host:container
+    depends_on:
+      - cinema_db
+  cinema_db:
+    image: 'postgres:14'
+    environment:
+      POSTGRES_DB: data_cinema
+      POSTGRES_USER: data_cinema_user
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - 'cinema-data:/var/lib/postgres/data'
+volumes:
+  cinema-data:
