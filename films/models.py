@@ -17,8 +17,10 @@ class Genre(models.Model):
 
 
 class Film(models.Model):
+    # class Meta:
+    #     unique_together = ['title', 'director']
     director = models.ForeignKey(Director, on_delete=models.CASCADE,
-                                 null=True)
+                                 null=True)  # director_id
     genres = models.ManyToManyField(Genre, blank=True)
     title = models.CharField(max_length=255)
     text = models.TextField(null=True, blank=True)
