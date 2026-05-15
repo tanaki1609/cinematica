@@ -9,10 +9,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = 'text stars'.split()
 
 
-class DirectorSerializer(serializers.ModelSerializer):
+class DirectorListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Director
         fields = 'id first_name last_name'.split()
+
+
+class DirectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Director
+        fields = 'id first_name last_name birthday'.split()
 
 
 class FilmDetailSerializer(serializers.ModelSerializer):
@@ -56,3 +62,9 @@ class FilmValidateSerializer(serializers.Serializer):
         if len(genres_db) != len(genres):
             raise ValidationError('Genre does not exist!')
         return genres
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = '__all__'

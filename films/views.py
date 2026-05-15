@@ -1,13 +1,83 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from .models import Film, Director
+from rest_framework import status, mixins
+from .models import Film, Director, Genre
 from .serializers import (
     FilmListSerializer,
     FilmDetailSerializer,
-    FilmValidateSerializer
+    FilmValidateSerializer,
+    GenreSerializer,
+    DirectorSerializer,
+    DirectorListSerializer
 )
 from django.db import transaction
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
+from rest_framework.viewsets import ModelViewSet
+
+
+class UpdateDestroyAPIView(mixins.UpdateModelMixin,
+                           mixins.DestroyModelMixin,
+                           GenericAPIView):
+    """
+    Concrete view for retrieving, updating or deleting a model instance.
+    """
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class CustomPagination(PageNumberPagination):
+    def get_paginated_response(self, data):
+        return Response({
+            'total': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+        })
+
+
+class GenreListAPIView(ListCreateAPIView):  # get->list, post->create
+    queryset = Genre.objects.all()  # list of data from DB
+    serializer_class = GenreSerializer  # class serializer inherited by ModelSerializer
+    pagination_class = CustomPagination
+    authentication_classes = [TokenAuthentication]
+
+
+class GenreDetailAPIView(RetrieveUpdateDestroyAPIView):  # get->retrieve, put->update, delete->destroy
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    lookup_field = 'id'
+
+
+class DirectorViewSet(ModelViewSet):
+    queryset = Director.objects.all()
+    serializer_class = DirectorSerializer
+    pagination_class = CustomPagination
+    lookup_field = 'id'
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return DirectorListSerializer
+        return DirectorSerializer
+
+    # def list(self, request, *args, **kwargs):
+    #     queryset = self.filter_queryset(self.get_queryset())
+    #
+    #     page = self.paginate_queryset(queryset)
+    #     if page is not None:
+    #         serializer = DirectorListSerializer(page, many=True)
+    #         return self.get_paginated_response(serializer.data)
+    #
+    #     serializer = DirectorListSerializer(queryset, many=True)
+    #     return Response(serializer.data)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
