@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Film
+from .models import Film, Director
+
+
+class DirectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Director
+        fields = 'id first_name last_name'.split()
 
 
 class FilmDetailSerializer(serializers.ModelSerializer):
@@ -9,9 +15,13 @@ class FilmDetailSerializer(serializers.ModelSerializer):
 
 
 class FilmSerializer(serializers.ModelSerializer):
+    director = DirectorSerializer(many=False)
+    genres = serializers.SerializerMethodField()
+
     class Meta:
         model = Film
-        # fields = ['id', 'title', 'release_year', 'rating', 'created']
-        # fields = '__all__'
-        # exclude = ['text', 'release_year', 'rating']
-        fields = 'id title rating created'.split()
+        fields = 'id title rating created director genres'.split()
+        # depth = 1
+
+    def get_genres(self, film):
+        return film.genre_names
