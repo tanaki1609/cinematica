@@ -2,7 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Film
-from .serializers import FilmSerializer, FilmDetailSerializer
+from .serializers import FilmSerializer, FilmDetailSerializer, FilmValidateSerializer
+from django.db import transaction
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -43,25 +44,33 @@ def film_list_create_api_view(request):
         # step 3: return response
         return Response(data=list_)
     elif request.method == 'POST':
+        # step 0: validation (existing, typing, extra)
+        serializer = FilmValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+
+        data = serializer.validated_data
         # step 1: receive data (RequestBody)
-        title = request.data.get('title')
-        text = request.data.get('text')
-        rating = request.data.get('rating')
-        release_year = request.data.get('release_year')
-        is_hit = request.data.get('is_hit')
-        director_id = request.data.get('director_id')
-        genres = request.data.get('genres')
+        title = data.get('title')
+        text = data.get('text')
+        rating = data.get('rating')
+        release_year = data.get('release_year')
+        is_hit = data.get('is_hit')
+        director_id = data.get('director_id')
+        genres = data.get('genres')
 
         # step 2: create film
-        film = Film.objects.create(
-            title=title,
-            text=text,
-            rating=rating,
-            release_year=release_year,
-            is_hit=is_hit,
-            director_id=director_id,
-        )
-        film.genres.set(genres)
+        with transaction.atomic():
+            film = Film.objects.create(
+                title=title,
+                text=text,
+                rating=rating,
+                release_year=release_year,
+                is_hit=is_hit,
+                director_id=director_id,
+            )
+            film.genres.set(genres)
 
         # step 3: return response (film)
         return Response(status=status.HTTP_201_CREATED,
