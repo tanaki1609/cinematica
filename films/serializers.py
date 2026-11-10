@@ -3,10 +3,22 @@ from .models import Film, Director, Genre
 from rest_framework.exceptions import ValidationError
 
 
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = '__all__'
+
+
 class DirectorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Director
         fields = 'id first_name last_name'.split()
+
+
+class DirectorValidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Director
+        fields = 'id first_name last_name birthday'.split()
 
 
 class FilmDetailSerializer(serializers.ModelSerializer):
